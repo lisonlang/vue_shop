@@ -11,16 +11,17 @@
         :rules="rules"
         ref="ruleForm"
         class="demo-ruleForm"
+        label-width="0px"
 
       >
-        <el-form-item label="" prop="userName">
+        <el-form-item  prop="userName">
           <el-input
             v-model="ruleForm.userName"
             autocomplete="off"
             prefix-icon="el-icon-user-solid"
           ></el-input>
         </el-form-item>
-        <el-form-item label="" prop="pass">
+        <el-form-item  prop="pass">
           <el-input
             type="password"
             v-model="ruleForm.pass"
