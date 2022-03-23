@@ -42,65 +42,23 @@
               <i class="el-icon-menu"></i>welcome</el-menu-item
             >
           </el-submenu>
-          <el-submenu index="1">
+          <el-submenu  v-for="(item,index) in menu" :key="item.id" :index="index.toString()">
             <template slot="title">
               <i class="el-icon-location"></i>
-              <span slot="title">用户管理</span>
+              <span slot="title">{{item.authName}}</span>
             </template>
 
-            <el-menu-item index="1-1">
-              <i class="el-icon-menu"></i>用户列表</el-menu-item
+            <el-menu-item v-for="(childrenItem) in item.children" :key="childrenItem.id" :index="`/home/${childrenItem.path}`">
+              <i class="el-icon-menu"></i>{{childrenItem.authName}}</el-menu-item
             >
           </el-submenu>
-          <el-submenu index="2">
-            <template slot="title">
-              <i class="el-icon-menu"></i>
-              <span slot="title">权限管理</span>
-            </template>
-            <el-menu-item index="2-1">
-              <i class="el-icon-menu"></i>角色列表</el-menu-item
-            >
-            <el-menu-item index="2-2">
-              <i class="el-icon-menu"></i>权限列表</el-menu-item
-            >
-          </el-submenu>
-          <el-submenu index="3">
-            <template slot="title">
-              <i class="el-icon-shopping-bag-2"></i>
-              <span slot="title">商品管理</span>
-            </template>
-            <el-menu-item index="3-1">
-              <i class="el-icon-menu"></i>商品列表</el-menu-item
-            >
-            <el-menu-item index="3-2">
-              <i class="el-icon-menu"></i>分类参数</el-menu-item
-            >
-            <el-menu-item index="3-3">
-              <i class="el-icon-menu"></i>商品分类</el-menu-item
-            >
-          </el-submenu>
-          <el-submenu index="4">
-            <template slot="title">
-              <i class="el-icon-s-order"></i>
-              <span slot="title">订单管理</span>
-            </template>
-            <el-menu-item index="4-1">
-              <i class="el-icon-menu"></i>订单列表</el-menu-item
-            >
-          </el-submenu>
-          <el-submenu index="5">
-            <template slot="title">
-              <i class="el-icon-s-platform"></i>
-              <span slot="title">数据统计</span>
-            </template>
-            <el-menu-item index="5-1">
-              <i class="el-icon-menu"></i>数据报表</el-menu-item
-            >
-          </el-submenu>
+         
         </el-menu>
       </el-aside>
       <!-- 切换区域 -->
-      <el-main class="box"><router-view></router-view></el-main>
+      <el-main class="box">
+        
+        <router-view></router-view></el-main>
     </el-container>
   </el-container>
 </template>
@@ -114,13 +72,19 @@ export default {
     return {
       isCollapse: true,
       userUrl,
+      // 面包屑中的值
+      firstMenu:'',
+      secondMenu:'',
+      // 菜单的数据
+      menu:""
     };
   },
   mounted() {
     axios
       .get("https://lianghj.top:8888/api/private/v1/menus")
       .then((res) => {
-        console.log(res);
+          this.menu=res.data.data;
+          console.log(this.menu);
       })
       .catch((err) => {
         console.log(err);
