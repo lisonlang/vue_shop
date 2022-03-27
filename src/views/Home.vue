@@ -42,23 +42,29 @@
               <i class="el-icon-menu"></i>welcome</el-menu-item
             >
           </el-submenu>
-          <el-submenu  v-for="(item,index) in menu" :key="item.id" :index="index.toString()">
+          <el-submenu
+            v-for="(item, index) in menu"
+            :key="item.id"
+            :index="index.toString()"
+          >
             <template slot="title">
               <i class="el-icon-location"></i>
-              <span slot="title">{{item.authName}}</span>
+              <span slot="title">{{ item.authName }}</span>
             </template>
 
-            <el-menu-item v-for="(childrenItem) in item.children" :key="childrenItem.id" :index="`/home/${childrenItem.path}`">
-              <i class="el-icon-menu"></i>{{childrenItem.authName}}</el-menu-item
+            <el-menu-item
+              v-for="childrenItem in item.children"
+              :key="childrenItem.id"
+              :index="`/home/${childrenItem.path}`"
+            >
+              <i class="el-icon-menu"></i
+              >{{ childrenItem.authName }}</el-menu-item
             >
           </el-submenu>
-         
         </el-menu>
       </el-aside>
       <!-- 切换区域 -->
-      <el-main class="box">
-        
-        <router-view></router-view></el-main>
+      <el-main class="box"> <router-view></router-view></el-main>
     </el-container>
   </el-container>
 </template>
@@ -66,25 +72,26 @@
 <script>
 // @ is an alias to /src
 import userUrl from "../assets/manager.jpg";
-import axios from "axios";
+import { request } from "../network/request";
 export default {
   data() {
     return {
       isCollapse: true,
       userUrl,
       // 面包屑中的值
-      firstMenu:'',
-      secondMenu:'',
+      firstMenu: "",
+      secondMenu: "",
       // 菜单的数据
-      menu:""
+      menu: "",
     };
   },
   mounted() {
-    axios
-      .get("https://lianghj.top:8888/api/private/v1/menus")
+    // axios
+    //   .get("https://lianghj.top:8888/api/private/v1/menus")
+    request({ url: "/menus", method: "get" })
       .then((res) => {
-          this.menu=res.data.data;
-          console.log(this.menu);
+        this.menu = res.data.data;
+        // console.log(this.menu);
       })
       .catch((err) => {
         console.log(err);

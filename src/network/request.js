@@ -4,11 +4,12 @@ export function request(config){
  const  axiosobj = axios.create({
        baseURL:'https://lianghj.top:8888/api/private/v1/',
    })
-   
-   return axiosobj(config);
-} 
-axios.interceptors.request.use((config)=>{
+  //  axios拦截器
+   axiosobj.interceptors.request.use((config)=>{
   
     config.headers.Authorization = window.sessionStorage.getItem('token')
+    // console.log("ssss");
       return config
 })
+   return axiosobj(config);
+} 

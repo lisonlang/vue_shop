@@ -1,21 +1,247 @@
 <template>
   <div>
-  <Bhead firstMenu="用户管理" secondMenu="用户列表"></Bhead>
-    <h1>user</h1>
-   
+    <Bhead firstMenu="用户管理" secondMenu="用户列表"></Bhead>
+    <!-- 切换的区域 -->
+    <div>
+      <!-- 搜索 -->
+      <div>
+        <el-input
+          placeholder="请输入内容"
+          class="input-with-select"
+          v-model="input"
+        >
+          <el-button
+            slot="append"
+            icon="el-icon-search"
+            @click="finduser"
+          ></el-button>
+        </el-input>
+        <el-button type="primary">用户添加</el-button>
+      </div>
+
+      <!-- 表格 -->
+      <div>
+        <el-table :data="tableData" border style="width: 100%" stripe>
+          <el-table-column type="index" label="#"> </el-table-column>
+
+          <el-table-column prop="username" label="姓名"> </el-table-column>
+
+          <el-table-column prop="email" label="邮箱"> </el-table-column>
+          <el-table-column prop="mobile" label="电话"> </el-table-column>
+          <el-table-column prop="role_name" label="角色"> </el-table-column>
+          <el-table-column label="状态">
+            <template slot-scope="scope">
+              <el-switch
+                v-model="scope.row.value"
+                active-color="#13ce66"
+                inactive-color="#ff4949"
+              >
+              </el-switch>
+            </template>
+          </el-table-column>
+          <!-- 表格按钮 -->
+          <el-table-column align="center" label="操作" header-align="left">
+            <!-- 暂时先这样写着 -->
+            <template slot-scope="scope">
+              <el-button
+                type="primary"
+                icon="el-icon-edit"
+                @click="dialogFormVisible = true"
+                size="small"
+              ></el-button>
+              <!-- 删除 -->
+              <el-button
+                type="danger"
+                icon="el-icon-delete"
+                @click="delinfo = true"
+                size="small"
+              ></el-button>
+              <el-button
+                type="warning"
+                icon="el-icon-setting"
+                @click="roleinfo = true"
+                size="small"
+              ></el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <!-- 分页 -->
+      <div class="block">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="currentPage4"
+          :page-sizes="[5, 9, 13, 15]"
+          :page-size="5"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="total"
+        >
+        </el-pagination>
+      </div>
+    </div>
+
+    <!-- 修改用户信息对话框 -->
+    <el-dialog title="修改用户" :visible.sync="dialogFormVisible">
+      <el-form :model="form">
+        <el-form-item label="用户名" :label-width="formLabelWidth">
+          <el-input autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" :label-width="formLabelWidth">
+          <el-input autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" :label-width="formLabelWidth">
+          <el-input autocomplete="off"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="dialogFormVisible = false"
+          >确 定</el-button
+        >
+      </div>
+    </el-dialog>
+    <!-- 删除信息的对话框 -->
+    <el-dialog title="永久删除该用户" :visible.sync="delinfo" width="30%">
+      <span>此操作将永久删除该文件, 是否继续?</span>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="delinfo = false">取 消</el-button>
+        <el-button type="primary" @click="dialogVisible = false"
+          >确 定</el-button
+        >
+      </span>
+    </el-dialog>
+    <!-- 分配角色的对话框 -->
+    <el-dialog title="分配角色" :visible.sync="roleinfo" width="50%">
+      <span
+        ><div>当前的用户 : admin</div>
+        <div>当前的角色 : 超级管理员</div>
+        <div>
+          分配新角色 ：
+          <el-select v-model="value" placeholder="请选择">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            >
+            </el-option>
+          </el-select></div
+      ></span>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="roleinfo = false">取 消</el-button>
+        <el-button type="primary" @click="dialogVisible = false"
+          >确 定</el-button
+        >
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-
-import Bhead from '../../../components/bhead.vue';
+import Bhead from "../../../components/bhead.vue";
+import { request } from "../../../network/request";
 export default {
- components: {
-    Bhead
+  components: {
+    Bhead,
+  },
+  mounted() {
+    // 引入用户数据
 
- }
+    this.getuserinfo();
+  },
+  methods: {
+    // 搜索用户的方法
+    finduser() {
+      this.getuserinfo();
+    },
+    // 得到用户数据的方法
+    getuserinfo() {
+      request({
+        url: "/users",
+        method: "get",
+        params: {
+          query: this.input,
+          pagenum: this.currentPage4,
+          pagesize: this.pagesize,
+        },
+      })
+        .then((res) => {
+          // 获取表格数据
+          this.tableData = res.data.data.users;
+          // 获取总计录数
+          this.total = res.data.data.total;
+          // 获取当前页
+          this.currentPage4 = res.data.data.pagenum;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+    //  分页的方法
+    handleSizeChange(val) {
+      // console.log(`每页 ${val} 条`);
+      this.pagesize = val;
+
+      this.getuserinfo();
+    },
+    handleCurrentChange(val) {
+      // console.log(`当前页: ${val}`);
+      this.currentPage4 = val;
+
+      this.getuserinfo();
+    },
+    // 搜索用户的方法
+  },
+  data() {
+    return {
+      // 搜索框的值
+      input: "",
+      // select的数据
+      options: [
+        {
+          value: "选项1",
+          label: "黄金糕",
+        },
+        {
+          value: "选项2",
+          label: "双皮奶",
+        },
+        {
+          value: "选项3",
+          label: "蚵仔煎",
+        },
+        {
+          value: "选项4",
+          label: "龙须面",
+        },
+        {
+          value: "选项5",
+          label: "北京烤鸭",
+        },
+      ],
+      value: "",
+      // 弹出框label的宽度
+      formLabelWidth: "80px",
+      // 访问对话框的值
+      roleinfo: false,
+      delinfo: false,
+      dialogFormVisible: false,
+      // 当前页的值
+      currentPage4: 1,
+      // 每页条数
+      pagesize: 5,
+      //  表格数据
+      tableData: [],
+      // 总记录数
+      total: 0,
+    };
+  },
 };
 </script>
 
-<style>
+<style lang="less" scoped>
+.input-with-select {
+  width: 30%;
+}
 </style>
