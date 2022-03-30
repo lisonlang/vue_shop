@@ -16,7 +16,7 @@
             @click="finduser"
           ></el-button>
         </el-input>
-        <el-button type="primary">用户添加</el-button>
+        <el-button type="primary" @click="showadd = true">用户添加</el-button>
       </div>
 
       <!-- 表格 -->
@@ -55,10 +55,11 @@
                 @click="deluser(scope.row.id)"
                 size="small"
               ></el-button>
+              <!-- 分配角色按钮 -->
               <el-button
                 type="warning"
                 icon="el-icon-setting"
-                @click="roleinfo = true"
+                @click="showroleinfo(scope.row)"
                 size="small"
               ></el-button>
             </template>
@@ -84,7 +85,11 @@
     <el-dialog title="修改用户" :visible.sync="dialogFormVisible">
       <el-form :model="form">
         <el-form-item label="用户名" :label-width="formLabelWidth">
-          <el-input autocomplete="off" v-model="form.name"></el-input>
+          <el-input
+            autocomplete="off"
+            v-model="form.name"
+            :disabled="true"
+          ></el-input>
         </el-form-item>
         <el-form-item label="邮箱" :label-width="formLabelWidth">
           <el-input autocomplete="off" v-model="form.email"></el-input>
@@ -109,26 +114,45 @@
     <!-- 分配角色的对话框 -->
     <el-dialog title="分配角色" :visible.sync="roleinfo" width="50%">
       <span
-        ><div>当前的用户 : admin</div>
-        <div>当前的角色 : 超级管理员</div>
+        ><div>当前的用户 : {{ roleuser }}</div>
+        <div>当前的角色 : {{ role }}</div>
         <div>
           分配新角色 ：
-          <el-select v-model="value" placeholder="请选择">
+          <el-select v-model="roleid" placeholder="请选择">
             <el-option
               v-for="item in options"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
+              :key="item.id"
+              :label="item.roleName"
+              :value="item.id"
             >
             </el-option>
           </el-select></div
       ></span>
       <span slot="footer" class="dialog-footer">
         <el-button @click="roleinfo = false">取 消</el-button>
-        <el-button type="primary" @click="dialogVisible = false"
-          >确 定</el-button
-        >
+        <el-button type="primary" @click="surerole">确 定</el-button>
       </span>
+    </el-dialog>
+    <!-- 添加用户的对话框 -->
+    <el-dialog title="添加用户" :visible.sync="showadd">
+      <el-form :model="addForm">
+        <el-form-item label="用户名" :label-width="formLabelWidth">
+          <el-input autocomplete="off" v-model="addForm.username"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" :label-width="formLabelWidth">
+          <el-input autocomplete="off" v-model="addForm.password"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" :label-width="formLabelWidth">
+          <el-input autocomplete="off" v-model="addForm.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" :label-width="formLabelWidth">
+          <el-input autocomplete="off" v-model="addForm.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="showadd = false">取 消</el-button>
+        <el-button type="primary" @click="addway()">确 定</el-button>
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -146,6 +170,85 @@ export default {
     this.getuserinfo();
   },
   methods: {
+    // 添加用户的方法
+    addway() {
+      this.showadd = false;
+      request({
+        method: "post",
+        url: "/users",
+        data: {
+          username: this.addForm.username,
+          password: this.addForm.password,
+          mobile: this.addForm.mobile,
+          email: this.addForm.email,
+        },
+      })
+        .then((res) => {
+          if (res.data.meta.status === 200) {
+            this.$message({
+              message: "恭喜你，这是一条成功消息",
+              type: "success",
+            });
+            this.addForm = {
+              username: "",
+              password: "",
+              email: "",
+              mobile: "",
+            };
+            this.getuserinfo();
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+
+    // 编辑用户角色的弹框
+    showroleinfo(value) {
+      this.roleinfo = true;
+      this.roleuser = value.username;
+      this.role = value.role_name;
+      // 选中的id
+      this.id = value.id;
+      //  获取角色列表
+      request({
+        url: "/roles",
+        method: "get",
+      })
+        .then((res) => {
+          console.log(res.data.data);
+          if (res.data.meta.status === 200) {
+            this.$message({
+              message: "恭喜你，这是一条成功消息",
+              type: "success",
+            });
+
+            this.options = res.data.data;
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+    // 确认修改角色的方法
+    surerole() {
+      this.roleinfo = false;
+      request({
+        url: `/users/${this.id}/role`,
+        method: "put",
+        data: {
+          rid: this.roleid,
+        },
+      })
+        .then((res) => {
+          if (res.data.meta.status === 200) {
+            this.getuserinfo();
+            this.roleid = "";
+          }
+        })
+        .catch(() => {});
+    },
+
     // 搜索用户的方法
     finduser() {
       this.getuserinfo();
@@ -251,32 +354,25 @@ export default {
   },
   data() {
     return {
+      // 显示添加用户的对话框
+      showadd: false,
+      // 添加用户的数据对象
+      addForm: {
+        username: "",
+        password: "",
+        email: "",
+        mobile: "",
+      },
+      // 角色id
+      roleid: "",
+      // 要编辑角色的用户名
+      roleuser: "",
+      role: "",
       // 搜索框的值
       input: "",
-      // select的数据
-      options: [
-        {
-          value: "选项1",
-          label: "黄金糕",
-        },
-        {
-          value: "选项2",
-          label: "双皮奶",
-        },
-        {
-          value: "选项3",
-          label: "蚵仔煎",
-        },
-        {
-          value: "选项4",
-          label: "龙须面",
-        },
-        {
-          value: "选项5",
-          label: "北京烤鸭",
-        },
-      ],
-      // 要删除用户的id
+      // select的角色数据
+      options: [],
+      // 选中用户的id
       id: "",
 
       value: "",
