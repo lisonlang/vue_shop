@@ -2,13 +2,13 @@
   <div>
     <Bhead firstMenu="用户管理" secondMenu="用户列表"></Bhead>
     <!-- 切换的区域 -->
-    <div>
+    <div class="table-box">
       <!-- 搜索 -->
-      <div>
+      <div class="input-box">
         <el-input
           placeholder="请输入内容"
           class="input-with-select"
-          v-model="input"
+          v-model="queryinfo.query"
         >
           <el-button
             slot="append"
@@ -26,7 +26,8 @@
 
           <el-table-column prop="username" label="姓名"> </el-table-column>
 
-          <el-table-column prop="email" label="邮箱"> </el-table-column>
+          <el-table-column prop="email" label="邮箱" width="180">
+          </el-table-column>
           <el-table-column prop="mobile" label="电话"> </el-table-column>
           <el-table-column prop="role_name" label="角色"> </el-table-column>
           <el-table-column label="状态">
@@ -40,27 +41,32 @@
             </template>
           </el-table-column>
           <!-- 表格按钮 -->
-          <el-table-column align="center" label="操作" header-align="left">
+          <el-table-column
+            align="center"
+            label="操作"
+            header-align="left"
+            width="180"
+          >
             <template slot-scope="scope">
               <el-button
                 type="primary"
                 icon="el-icon-edit"
                 @click="edituser(scope.row)"
-                size="small"
+                size="mini"
               ></el-button>
               <!-- 删除 -->
               <el-button
                 type="danger"
                 icon="el-icon-delete"
                 @click="deluser(scope.row.id)"
-                size="small"
+                size="mini"
               ></el-button>
               <!-- 分配角色按钮 -->
               <el-button
                 type="warning"
                 icon="el-icon-setting"
                 @click="showroleinfo(scope.row)"
-                size="small"
+                size="mini"
               ></el-button>
             </template>
           </el-table-column>
@@ -71,7 +77,7 @@
         <el-pagination
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
-          :current-page="currentPage4"
+          :current-page="queryinfo.pagenum"
           :page-sizes="[5, 9, 13, 15]"
           :page-size="5"
           layout="total, sizes, prev, pager, next, jumper"
@@ -134,18 +140,22 @@
       </span>
     </el-dialog>
     <!-- 添加用户的对话框 -->
-    <el-dialog title="添加用户" :visible.sync="showadd">
-      <el-form :model="addForm">
-        <el-form-item label="用户名" :label-width="formLabelWidth">
+    <el-dialog
+      title="添加用户"
+      :visible.sync="showadd"
+      @close="addDislogClosed"
+    >
+      <el-form :model="addForm" ref="addFormRef" >
+        <el-form-item label="用户名" :label-width="formLabelWidth" prop="username">
           <el-input autocomplete="off" v-model="addForm.username"></el-input>
         </el-form-item>
-        <el-form-item label="密码" :label-width="formLabelWidth">
+        <el-form-item label="密码" :label-width="formLabelWidth" prop="password">
           <el-input autocomplete="off" v-model="addForm.password"></el-input>
         </el-form-item>
-        <el-form-item label="邮箱" :label-width="formLabelWidth">
+        <el-form-item label="邮箱" :label-width="formLabelWidth" prop="email">
           <el-input autocomplete="off" v-model="addForm.email"></el-input>
         </el-form-item>
-        <el-form-item label="手机" :label-width="formLabelWidth">
+        <el-form-item label="手机" :label-width="formLabelWidth" prop="mobile">
           <el-input autocomplete="off" v-model="addForm.mobile"></el-input>
         </el-form-item>
       </el-form>
@@ -170,32 +180,30 @@ export default {
     this.getuserinfo();
   },
   methods: {
+    // 监听添加用户的对话框关闭事件
+    addDislogClosed() {
+    
+      this.$refs.addFormRef.resetFields();
+    },
     // 添加用户的方法
     addway() {
-      this.showadd = false;
       request({
         method: "post",
         url: "/users",
-        data: {
-          username: this.addForm.username,
-          password: this.addForm.password,
-          mobile: this.addForm.mobile,
-          email: this.addForm.email,
-        },
+        data: this.addForm,
       })
         .then((res) => {
-          if (res.data.meta.status === 200) {
-            this.$message({
-              message: "恭喜你，这是一条成功消息",
-              type: "success",
-            });
-            this.addForm = {
-              username: "",
-              password: "",
-              email: "",
-              mobile: "",
-            };
+          if (res.data.meta.status === 201) {
+            this.showadd = false;
             this.getuserinfo();
+            //   this.addForm = {
+            //   username: "",
+            //   password: "",
+            //   email: "",
+            //   mobile: "",
+            // };
+            return this.$message.success("恭喜你，添加成功");
+          
           }
         })
         .catch((err) => {
@@ -254,38 +262,42 @@ export default {
       this.getuserinfo();
     },
     // 得到用户数据的方法
-    getuserinfo() {
-      request({
+    async getuserinfo() {
+      const { data: res } = await request({
         url: "/users",
         method: "get",
-        params: {
-          query: this.input,
-          pagenum: this.currentPage4,
-          pagesize: this.pagesize,
-        },
-      })
-        .then((res) => {
-          // 获取表格数据
-          this.tableData = res.data.data.users;
-          // 获取总计录数
-          this.total = res.data.data.total;
-          // 获取当前页
-          this.currentPage4 = res.data.data.pagenum;
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+        params: this.queryinfo,
+      });
+      if (res.meta.status === 200) {
+        this.$message.success("获取用户列表成功!");
+        this.tableData = res.data.users;
+        this.total = res.data.total;
+        this.queryinfo.pagenum = res.data.pagenum;
+      } else {
+        this.$message.error("获取用户列表失败!");
+      }
+      // .then((res) => {
+      //   // 获取表格数据
+      //   this.tableData = res.data.data.users;
+      //   // 获取总计录数
+      //   this.total = res.data.data.total;
+      //   // 获取当前页
+      //   this.queryinfo.pagenum = res.data.data.pagenum;
+      // })
+      // .catch((err) => {
+      //   console.log(err);
+      // });
     },
     //  分页的方法
     handleSizeChange(val) {
       // console.log(`每页 ${val} 条`);
-      this.pagesize = val;
+      this.queryinfo.pagesize = val;
 
       this.getuserinfo();
     },
     handleCurrentChange(val) {
       // console.log(`当前页: ${val}`);
-      this.currentPage4 = val;
+      this.queryinfo.pagenum = val;
 
       this.getuserinfo();
     },
@@ -339,10 +351,10 @@ export default {
               type: "success",
             });
             if (this.tableData.length === 1) {
-              --this.currentPage4;
+              --this.queryinfo.pagenum;
             }
-            if (this.currentPage4 < 1) {
-              this.currentPage4 = 1;
+            if (this.queryinfo.pagenum < 1) {
+              this.queryinfo.pagenum = 1;
             }
             this.getuserinfo();
           }
@@ -354,6 +366,7 @@ export default {
   },
   data() {
     return {
+      
       // 显示添加用户的对话框
       showadd: false,
       // 添加用户的数据对象
@@ -368,8 +381,8 @@ export default {
       // 要编辑角色的用户名
       roleuser: "",
       role: "",
-      // 搜索框的值
-      input: "",
+
+      // input: "",
       // select的角色数据
       options: [],
       // 选中用户的id
@@ -383,9 +396,10 @@ export default {
       delinfo: false,
       dialogFormVisible: false,
       // 当前页的值
-      currentPage4: 1,
+      // currentPage4: 1,
       // 每页条数
-      pagesize: 5,
+      // pagesize: 5,
+      // 用户信息
       //  表格数据
       tableData: [],
       // 总记录数
@@ -397,6 +411,15 @@ export default {
         tel: "",
         name: "",
       },
+      // 获取用户列表的参数对象
+      queryinfo: {
+        // 搜索框的值
+        query: "",
+        // 当前页的值
+        pagenum: 1,
+        // 每页条数
+        pagesize: 5,
+      },
     };
   },
 };
@@ -405,5 +428,17 @@ export default {
 <style lang="less" scoped>
 .input-with-select {
   width: 30%;
+}
+
+.table-box {
+  background-color: #fff;
+
+  padding: 20px;
+  .input-box {
+    padding-bottom: 10px;
+  }
+  .block {
+    padding-top: 10px;
+  }
 }
 </style>

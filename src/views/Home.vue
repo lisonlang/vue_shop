@@ -109,7 +109,10 @@ export default {
 </script>
 <style scoped lang="less">
 // 导航与切换区域
-
+.box{
+  background-color:#eaedf1;
+  
+}
 ele-ui引入的导航 .el-menu-vertical-demo:not(.el-menu--collapse) {
   width: 200px;
   min-height: 400px;

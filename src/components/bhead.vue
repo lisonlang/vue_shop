@@ -25,5 +25,8 @@ export default {
 };
 </script>
 
-<style>
+<style lang="less" scoped>
+.el-breadcrumb{
+  padding-bottom: 20px;
+}
 </style>              
