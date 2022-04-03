@@ -93,7 +93,7 @@
         <el-form-item label="用户名" :label-width="formLabelWidth">
           <el-input
             autocomplete="off"
-            v-model="form.name"
+            v-model="form.username"
             :disabled="true"
           ></el-input>
         </el-form-item>
@@ -101,7 +101,7 @@
           <el-input autocomplete="off" v-model="form.email"></el-input>
         </el-form-item>
         <el-form-item label="手机" :label-width="formLabelWidth">
-          <el-input autocomplete="off" v-model="form.tel"></el-input>
+          <el-input autocomplete="off" v-model="form.mobile"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -120,8 +120,8 @@
     <!-- 分配角色的对话框 -->
     <el-dialog title="分配角色" :visible.sync="roleinfo" width="50%">
       <span
-        ><div>当前的用户 : {{ roleuser }}</div>
-        <div>当前的角色 : {{ role }}</div>
+        ><div>当前的用户 : {{ userinfo.username}}</div>
+        <div>当前的角色 : {{ userinfo.role_name }}</div>
         <div>
           分配新角色 ：
           <el-select v-model="roleid" placeholder="请选择">
@@ -214,10 +214,11 @@ export default {
     // 编辑用户角色的弹框
     showroleinfo(value) {
       this.roleinfo = true;
-      this.roleuser = value.username;
-      this.role = value.role_name;
+this.userinfo=value;
+      // this.roleuser = value.username;
+      // this.role = value.role_name;
       // 选中的id
-      this.id = value.id;
+      // this.id = value.id;
       //  获取角色列表
       request({
         url: "/roles",
@@ -242,7 +243,7 @@ export default {
     surerole() {
       this.roleinfo = false;
       request({
-        url: `/users/${this.id}/role`,
+        url: `/users/${this.userinfo.id}/role`,
         method: "put",
         data: {
           rid: this.roleid,
@@ -309,13 +310,13 @@ export default {
         method: "put",
         data: {
           email: this.form.email,
-          mobile: this.form.tel,
+          mobile: this.form.mobile,
         },
       })
         .then((res) => {
           if (res.data.meta.status === 200) {
-            console.log("进来了吗");
-            console.log(res.data);
+            // console.log("进来了吗");
+            // console.log(res.data);
             this.getuserinfo();
           }
         })
@@ -326,11 +327,9 @@ export default {
     // 编辑用户框回显的方法
     edituser(value) {
       this.dialogFormVisible = true;
-      console.log(value);
-      this.form.id = value.id;
-      this.form.email = value.email;
-      this.form.tel = value.mobile;
-      this.form.name = value.username;
+      // console.log(value);
+    
+      this.form =value
     },
     // 删除用户的方法
     deluser(id) {
@@ -379,9 +378,10 @@ export default {
       // 角色id
       roleid: "",
       // 要编辑角色的用户名
-      roleuser: "",
-      role: "",
-
+      // roleuser: "",
+      // role: "",
+      // 要编辑角色的用户信息
+userinfo:{},
       // input: "",
       // select的角色数据
       options: [],
@@ -406,10 +406,6 @@ export default {
       total: 0,
       // 修改表单的值
       form: {
-        id: "",
-        email: "",
-        tel: "",
-        name: "",
       },
       // 获取用户列表的参数对象
       queryinfo: {
