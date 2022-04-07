@@ -4,9 +4,19 @@ import router from './router'
 import store from './store'
 import ElementUI from 'element-ui'
 
+
+// import ZkTable from 'vue-table-with-tree-grid'
+
+
+
+// Vue.component('ZkTable', ZkTable)
+import TreeTable from 'vue-table-with-tree-grid'
+Vue.component('tree-table', TreeTable)
+
 import 'element-ui/lib/theme-chalk/index.css'
 Vue.config.productionTip = false
 Vue.use(ElementUI)
+
 
 new Vue({
   router,
